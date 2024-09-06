@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lo-fi Music Stream with Planner and File Drop</title>
+    <style>
+        #noteArea {
+            width: 300px;
+            height: 400px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            box-sizing: border-box;
+            display: none;
+            position: absolute;
+            top: 10%;
+            right: 10px;
+            z-index: 1000;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+    
+        #noteArea textarea {
+            width: 100%;
+            height: 300px;
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 10px;
+            font-size: 1em;
+            border-radius: 5px;
+        }
+    
+        #noteArea button {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #444;
+            border: none;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    
+        #noteArea button:hover {
+            background-color: #555;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            text-align: center;
+            background-attachment: fixed;
+            transition: background-image 0.5s ease-in-out;
+            background-size: cover;
+            background-position: center;
+            background-image: url('images/background1.gif');
+        }
+
+        #topRightText {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 2em;
+        }
+
+        #mainContent {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+            box-sizing: border-box;
+            margin-bottom: 60px;
+        }
+
+        #planner {
+            width: 300px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            box-sizing: border-box;
+            display: none;
+            position: absolute;
+            top: 10%;
+            left: 0;
+            z-index: 1000;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        #tasks {
+            margin-top: 20px;
+        }
+
+        .task {
+            background-color: #333;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .task input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .task.completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        #backgroundSelector {
+            display: inline-block;
+            margin-left: 20px;
+        }
+
+        #backgroundSelector label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        #backgroundSelector select {
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            font-size: 1em;
+            background-color: #444;
+            color: white;
+        }
+
+        #musicPlayer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-top: 1px solid #333;
+            box-sizing: border-box;
+        }
+
+        #musicPlayer button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            margin: 0 20px;
+            cursor: pointer;
+        }
+
+        #musicPlayer audio {
+            width: 300px;
+            outline: none;
+        }
+
+        #drop-area {
+            width: 40%;
+            height: 650px;
+            border: 3px dashed "transparent";
+            border-radius: 10px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: #ffffff;
+            font-size: 16px;
+            background-color: #000000;
+            transition: background-color 0.3s;
+            overflow: hidden;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        #drop-area.dragover {
+            background-color: #e0e0e0;
+        }
+
+        #drop-area embed {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="topRightText">Zen reads</div>
+    <div id="mainContent">
+        <!-- Optional: Other content can go here -->
+    </div>
+
+    <!-- Music Player -->
+    <div id="musicPlayer">
+        <button onclick="previousTrack()">&#9664;</button>
+        <audio id="audioPlayer" controls>
+            <source src="lofi1.mp3" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+        <button onclick="nextTrack()">&#9654;</button>
+        <button onclick="togglePlanner()">&#128197;</button>
+        <button onclick="toggleDropArea()">&#128190;</button>
+        <button onclick="toggleNoteArea()">&#9998;</button> 
+        <button onclick="toggleFullscreen()">&#x26F6;</button> <!-- Fullscreen Button -->
+
+        <!-- Moved Background Selector to Music Player -->
+        <div id="backgroundSelector">
+            <select id="backgroundSelect" onchange="changeBackground()">
+                <option value="images/background1.gif">Background 1</option>
+                <option value="images/background2.gif">Background 2</option>
+                <option value="images/background3.gif">Background 3</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Note Area -->
+    <div id="noteArea">
+        <textarea id="noteTextArea" placeholder="Write your notes here..."></textarea>
+        <button onclick="exportNotes()">Save Notes</button>
+    </div>
+
+    <!-- Planner Section -->
+    <div id="planner">
+        <h2>My Planner</h2>
+        <input type="text" id="taskInput" placeholder="Enter a new task...">
+        <button onclick="addTask()">Add Task</button>
+        <div id="tasks"></div>
+    </div>
+
+    <!-- File Drop Area -->
+    <div id="drop-area">
+        Drag & Drop a file here
+    </div>
+
+    <script>
+        let tracks = [
+            { src: 'lofi1.mp3', name: 'Track 1' },
+            { src: 'lofi2.mp3', name: 'Track 2' },
+            { src: 'lofi3.mp3', name: 'Track 3' },
+            { src: 'lofi4.mp3', name: 'Track 4' },
+            { src: 'lofi5.mp3', name: 'Track 5' },
+            { src: 'lofi6.mp3', name: 'Track 6' },
+            { src: 'lofi7.mp3', name: 'Track 7' },
+            { src: 'lofi8.mp3', name: 'Track 8' },
+            { src: 'lofi9.mp3', name: 'Track 9' }
+        ];
+        let currentTrackIndex = 0;
+    
+        function loadTrack(index) {
+            let audioPlayer = document.getElementById('audioPlayer');
+            audioPlayer.src = tracks[index].src;
+            audioPlayer.load();
+            audioPlayer.play();
+        }
+    
+        function nextTrack() {
+            currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+            loadTrack(currentTrackIndex);
+        }
+    
+        function previousTrack() {
+            currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
+            loadTrack(currentTrackIndex);
+        }
+    
+        function togglePlanner() {
+            var planner = document.getElementById('planner');
+            if (planner.style.display === 'none' || planner.style.display === '') {
+                planner.style.display = 'block';
+            } else {
+                planner.style.display = 'none';
+            }
+        }
+    
+        function toggleNoteArea() {
+            var noteArea = document.getElementById('noteArea');
+            if (noteArea.style.display === 'none' || noteArea.style.display === '') {
+                noteArea.style.display = 'block';
+            } else {
+                noteArea.style.display = 'none';
+            }
+        }
+    
+        function exportNotes() {
+            const notes = document.getElementById('noteTextArea').value;
+            if (notes.trim() === '') {
+                alert('Note area is empty. Please write something.');
+                return;
+            }
+            const blob = new Blob([notes], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'notes.txt';
+            link.click();
+        }
+        
+
+        function addTask() {
+            const taskInput = document.getElementById('taskInput');
+            const taskText = taskInput.value.trim();
+            if (taskText !== '') {
+                const task = document.createElement('div');
+                task.className = 'task';
+                task.innerHTML = `<input type="checkbox"> ${taskText}`;
+                document.getElementById('tasks').appendChild(task);
+                taskInput.value = '';
+            }
+        }
+
+        function changeBackground() {
+            const selectedBackground = document.getElementById('backgroundSelect').value;
+            document.body.style.backgroundImage = `url('${selectedBackground}')`;
+        }
+
+        function toggleDropArea() {
+            var dropArea = document.getElementById('drop-area');
+            if (dropArea.style.display === 'none' || dropArea.style.display === '') {
+                dropArea.style.display = 'flex';
+            } else {
+                dropArea.style.display = 'none';
+            }
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
